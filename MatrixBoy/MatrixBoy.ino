@@ -18,9 +18,10 @@
 
 Matrix matrix;
 
-void setup() {
+void setup() {  
   Serial.begin(115200);
   while (!Serial) ;
+  
   matrix.begin();
 
   tone(11, 297, 250); // Ré
@@ -35,7 +36,7 @@ void loop() {
 
   const unsigned long m = micros();
   if (m - temps > 2000) {
-    Serial.println( matrix.flash(1000) );
+//    Serial.println( matrix.flash(1000) );
     temps = m;
   }
 
