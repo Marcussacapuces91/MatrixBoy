@@ -22,12 +22,12 @@ public:
  * Etats retournés par la méthode flash.
  */
   enum button_t {
-    UP = 5,
-    DOWN = 0,
-    LEFT = 3,
-    RIGHT = 6,
-    A = 4,
-    B = 2,
+    UP    = _BV(5),
+    DOWN  = _BV(0),
+    LEFT  = _BV(3),
+    RIGHT = _BV(6),
+    A     = _BV(4),
+    B     = _BV(2)
   };
 
   uint8_t button() const {
@@ -67,6 +67,14 @@ public:
     interrupts();
 
     cCol = 0;
+  }
+
+  void set(const byte x, const byte y) {
+    leds[y] |= 1 << x; 
+  }
+
+  void unSet(const byte x, const byte y) {
+    leds[y] &= ~(1 << x);  
   }
 
 /**
