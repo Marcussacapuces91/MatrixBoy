@@ -28,8 +28,11 @@ public:
     RIGHT = 6,
     A = 4,
     B = 2,
-    OFF = -1
   };
+
+  uint8_t button() const {
+    return Matrix::buttons;
+  }
 
 /**
  * Initialise l'état de l'instance.
@@ -48,6 +51,7 @@ public:
       leds[c] = 0xFF << c;
     }
 
+// Réglage Timer1
     noInterrupts();
     OCR1A = 10;
     TCCR1A = _BV(WGM10);           
@@ -55,48 +59,14 @@ public:
     TIMSK1 |= _BV(OCIE1A) | _BV(TOIE1);
     interrupts();
 
+// Réglage Analog-to-Digital Converter on A6
+    noInterrupts();
+    ADMUX = _BV(REFS0) | _BV(ADLAR) | 0x06; // ref = AVcc & 8 bits & MUX = ADC6
+    ADCSRA = _BV(ADEN) | 0x02;    // ADC Prescaler div. 4
+    ADCSRB = 0;
+    interrupts();
+
     cCol = 0;
-    
-    pinMode(13, OUTPUT);
-    
-  }
-
-/**
- * Éclaire une rangée pendant un temps donnée ne dépassant pas le paramètre t.
- * @param t : durée maximum de l'itération.
- * @return Le code du bouton pressé. Attention le code du bouton dépend
- */
-  button_t flash(const unsigned &t) const {
-    static uint8_t c = 0;
-
-    const uint8_t l = leds[c];
-
-// Set right rows
-    PORTC = (PORTC & ~B00010100) | (l & 0x10) | (l & 0x40) >> 4;
-    PORTD = (PORTD & ~B11111100) | (l & 0x03) << 5 | (l & 0x04) << 2 | (l & 0x08) << 4 | (l & 0x20) >> 2 | (l & 0x80) >> 5;
-        
-    const uint8_t col = cols[c];
-    
-// Switch col ON
-    pinMode(col, OUTPUT);
-    
-// Count bits (Brian Kernighan’s Algorithm)
-    byte count = 0;
-    for (byte n = l; n > 0; n &= (n - 1)) ++count;
-
-// Adapt lumi.
-    delayMicroseconds(10 + count * t / 8);
-
-// Test bouton
-    const button_t ret = analogRead(A6) < 1000 ? static_cast<button_t>(c) : OFF;
-
-// Next col.    
-    c = (c + 1) % 8;
-
-// Switch col OFF (Hi state, without pullup)
-    pinMode(col, INPUT);
-
-    return ret;
   }
 
 /**
@@ -112,12 +82,18 @@ public:
 // Switch col ON
     pinMode(cols[cCol], OUTPUT);
 
+// Start ADV Conv.
+    ADCSRA |= _BV(ADSC);
   }
 
+/**
+ * Méthode appelée par l'interruption du comparateur A (fin d'éclairage).
+ */
   inline static void comparatorInt() {
 // Test bouton
-    const button_t ret = analogRead(A6) < 1000 ? static_cast<button_t>(cCol) : OFF;
-    Serial.println(ret);
+    while (!(ADCSRA & _BV(ADIF))) ;  // test int flag.
+    ADCSRA |= _BV(ADIF);  // clear int flag.
+    buttons = ADCH < 220 ? buttons | (1 << cCol) : buttons & ~(1 << cCol);
 
 // Switch off
     pinMode(cols[cCol], INPUT);
@@ -132,7 +108,7 @@ public:
     for (byte n = l; n > 0; n &= (n - 1)) ++count;
     
 // Set timing on
-    OCR1A = 10 + count * 16;
+    OCR1A = 10 + count * count * 2;
   }
 
 protected:
@@ -143,7 +119,10 @@ private:
   static volatile uint8_t leds[8];
 
 /// current col.  
-  static byte cCol;
+  static volatile byte cCol;
+
+/// Buttons.
+  static volatile uint8_t buttons;
 
 /// Colones order.
   static const uint8_t cols[8];
@@ -154,19 +133,19 @@ private:
 };
 
 ISR(TIMER1_OVF_vect) {    // ROW ON
-  interrupts();
   Matrix::overflowInt();
 }
 
 ISR(TIMER1_COMPA_vect) {  // ROW OFF
-  interrupts();
   Matrix::comparatorInt();
 }
 
 
 volatile uint8_t Matrix::leds[8];
 
-byte Matrix::cCol;
+volatile byte Matrix::cCol;
+
+volatile uint8_t Matrix::buttons;
 
 const uint8_t Matrix::cols[] = { A0, A1, A5,  9,  8, 10, 12, A3};
 const uint8_t Matrix::rows[] = {  5,  6,  4,  7, A4,  3, A2,  2};

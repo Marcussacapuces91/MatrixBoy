@@ -36,7 +36,7 @@ void loop() {
 
   const unsigned long m = micros();
   if (m - temps > 2000) {
-//    Serial.println( matrix.flash(1000) );
+    Serial.println(matrix.button(), BIN);
     temps = m;
   }
 
