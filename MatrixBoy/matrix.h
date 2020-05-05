@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "zxpix_font.h"
+
 class Matrix {
 public:
 
@@ -81,7 +83,22 @@ public:
   }
 
   void println(const String& str) {
-    Serial.println(str);
+    for (unsigned l = 0; l < str.length(); ++l) {
+      const auto c = str.charAt(l);
+// 5 columns
+      for (byte i = 0; i < 6; ++i) {
+        const byte b = pgm_read_byte(&(font[c - 0x20][i]));
+        for (byte j = 0; j < 8; ++j) {
+          leds[j] = (leds[j] >> 1) + ( b & (0x80 >> j) ? 0x80 : 0x00 );
+        }
+        delay(50);
+      }
+// 1 separator
+      for (byte j = 0; j < 8; ++j) {
+        leds[j] >>= 1;
+      }
+      delay(50);
+    }
   }
 
 
