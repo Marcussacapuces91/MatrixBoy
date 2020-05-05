@@ -14,6 +14,7 @@
    limitations under the License. 
 */
 
+#pragma once
 
 class Matrix {
 public:
@@ -47,9 +48,12 @@ public:
 
     pinMode(A6, INPUT);
 
+/*
     for (byte c = 0; c < 8; ++c) {
       leds[c] = 0xFF << c;
     }
+*/
+//    leds = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 // Réglage Timer1
     noInterrupts();
@@ -87,23 +91,29 @@ public:
     PORTC = (PORTC & ~B00010100) | (l & 0x10) | (l & 0x40) >> 4;
     PORTD = (PORTD & ~B11111100) | (l & 0x03) << 5 | (l & 0x04) << 2 | (l & 0x08) << 4 | (l & 0x20) >> 2 | (l & 0x80) >> 5;
 
-// Switch col ON
+// Switch col. ON
     pinMode(cols[cCol], OUTPUT);
-
-// Start ADV Conv.
-    ADCSRA |= _BV(ADSC);
   }
 
 /**
  * Méthode appelée par l'interruption du comparateur A (fin d'éclairage).
  */
   inline static void comparatorInt() {
+    
+// Unset all rows
+    PORTC &= ~B00010100;
+    PORTD &= ~B11111100;
+
+// Start ADV Conv.
+    ADCSRA |= _BV(ADSC);
+
 // Test bouton
     while (!(ADCSRA & _BV(ADIF))) ;  // test int flag.
     ADCSRA |= _BV(ADIF);  // clear int flag.
-    buttons = ADCH < 220 ? buttons | (1 << cCol) : buttons & ~(1 << cCol);
+    buttons = (ADCH < 100) ? buttons | (1 << cCol) : buttons & ~(1 << cCol);
+//    Serial.println(ADCH);
 
-// Switch off
+// Switch col. off
     pinMode(cols[cCol], INPUT);
 
 // Next col    
@@ -113,10 +123,10 @@ public:
 // Count bits (Brian Kernighan’s Algorithm)
     const uint8_t l = leds[cCol];
     byte count = 0;
-    for (byte n = l; n > 0; n &= (n - 1)) ++count;
+    for (auto n = l; n > 0; n &= (n - 1)) ++count;
     
 // Set timing on
-    OCR1A = 10 + count * count * 2;
+    OCR1A = 10 + (count * 20) / 10;
   }
 
 protected:
