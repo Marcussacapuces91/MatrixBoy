@@ -105,6 +105,12 @@ public:
     leds[y] &= ~(1 << x);  
   }
 
+  void clear() {
+    for (auto i = 0; i < 8; ++i) {
+      leds[i] = 0;
+    }
+  }
+
 /**
  * Méthode appelée par l'interruption au début de l'éclairage.
  */
