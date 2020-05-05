@@ -27,48 +27,8 @@ void setup() {
   matrix.begin();
   
   snake.setup();
-
-#if 0  
-  matrix.begin();
-
-  tone(11, 297, 250); // Ré
-  delay(250);
-  tone(11, 371, 250); // Fa#
-  delay(250);
-  tone(11, 396, 250); // Sol
-#endif
-  
 }
 
 void loop() {
   snake.loop();
-  
-#if 0  
-  static unsigned long temps = millis();
-  static byte x = 4;
-  static byte y = 4;
-
-  const unsigned long m = millis();
-  if (m - temps > 250) {
-    matrix.unSet(x % 8, y % 8);
-    
-    const byte b = matrix.button();
-    if (b & Matrix::UP) y = (y+1) % 8;
-    if (b & Matrix::DOWN) y = (y == 0 ? 7 : y-1);
-    if (b & Matrix::LEFT) x = (x == 0 ? 7 : x-1);
-    if (b & Matrix::RIGHT) x = (x+1) % 8;
-
-//    if (b & Matrix::A) Serial.print(F("A "));
-//    if (b & Matrix::B) Serial.print(F("B "));
-//    if (b) Serial.println();
-
-    matrix.set(x % 8, y % 8);
-    Serial.print(x);
-    Serial.print(',');
-    Serial.println(y);
-
-    temps = m;
-  }
-#endif    
-
 }
