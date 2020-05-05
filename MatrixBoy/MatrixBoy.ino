@@ -15,13 +15,20 @@
 */
 
 #include "matrix.h"
+#include "snake.h"
 
 Matrix matrix;
+Snake snake(matrix);
 
 void setup() {  
   Serial.begin(115200);
   while (!Serial) ;
+
+  matrix.begin();
   
+  snake.setup();
+
+#if 0  
   matrix.begin();
 
   tone(11, 297, 250); // Ré
@@ -29,9 +36,14 @@ void setup() {
   tone(11, 371, 250); // Fa#
   delay(250);
   tone(11, 396, 250); // Sol
+#endif
+  
 }
 
 void loop() {
+  snake.loop();
+  
+#if 0  
   static unsigned long temps = millis();
   static byte x = 4;
   static byte y = 4;
@@ -57,8 +69,6 @@ void loop() {
 
     temps = m;
   }
+#endif    
 
-//  static char dx = 1;
-//   static char dy = 1;
-  
 }
