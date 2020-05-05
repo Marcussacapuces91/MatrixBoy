@@ -52,13 +52,6 @@ public:
 
     pinMode(A6, INPUT);
 
-/*
-    for (byte c = 0; c < 8; ++c) {
-      leds[c] = 0xFF << c;
-    }
-*/
-//    leds = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
 // Réglage Timer1
     noInterrupts();
     OCR1A = 10;
@@ -76,6 +69,21 @@ public:
 
     cCol = 0;
   }
+
+/*
+  void println(const __FlashStringHelper* const pData) {
+    
+  }
+*/
+
+  void println(const char c) {
+    println(String(c));
+  }
+
+  void println(const String& str) {
+    Serial.println(str);
+  }
+
 
 /**
  * Tests the defined LED (ON/OFF ?).
@@ -105,9 +113,14 @@ public:
     leds[y] &= ~(1 << x);  
   }
 
-  void clear() {
-    for (auto i = 0; i < 8; ++i) {
-      leds[i] = 0;
+
+/**
+ * Clear all LEDs.
+ * @param invert Let light all LEDs.
+ */
+  void clear(const bool invert = false) {
+    for (auto i = 0 ; i < 8 ; ++i) {
+      leds[i] = invert ? 0xFF : 0x00;
     }
   }
 
