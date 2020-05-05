@@ -31,6 +31,10 @@ public:
     B     = _BV(2)
   };
 
+  enum {
+    TONE_PIN = 11  // Pin 11
+  };
+
   uint8_t button() const {
     return Matrix::buttons;
   }
