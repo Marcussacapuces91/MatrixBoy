@@ -73,10 +73,30 @@ public:
     cCol = 0;
   }
 
+/**
+ * Tests the defined LED (ON/OFF ?).
+ * @param x x position.
+ * @param y y position.
+ * @return State of the defined LED.
+ */
+  bool test(const byte x, const byte y) const {
+    return (leds[y] & (1 << x));
+  }
+
+/**
+ * Sets the defined LED (ON).
+ * @param x x position.
+ * @param y y position.
+ */
   void set(const byte x, const byte y) {
     leds[y] |= 1 << x; 
   }
 
+/**
+ * Unsets the defined LED (OFF).
+ * @param x x position.
+ * @param y y position.
+ */
   void unSet(const byte x, const byte y) {
     leds[y] &= ~(1 << x);  
   }
