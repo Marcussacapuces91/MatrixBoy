@@ -17,6 +17,7 @@
 #pragma once
 
 #include "matrix.h"
+#include "pitches.h"
 
 class Snake {
 public:  
@@ -29,11 +30,19 @@ public:
  * @return un booléen qui indique le bon déroulement de la méthode.
  */
   boolean setup() {
-    Serial.println(__FUNCTION__);
-    Serial.println(sizeof(serpent));
-
-    serpent.last = 20;
-
+    matrix.println(F("Snake (c) 2020, MSoft"));
+    delay(1000);
+    for (byte i = 3; i > 0; --i) {
+      matrix.clear(true);
+      delay(50);
+      matrix.clear();
+      matrix.println('0' + i);
+      delay(1000);
+    }
+    matrix.clear(true);
+    delay(50);
+    matrix.clear();
+    
     return true;
   }
 
@@ -43,9 +52,13 @@ public:
  *         En cas de retour FALSE, il ne faut plus appeler cette méthode (fin du jeu par exemple).
  */
   boolean loop() {
+    static unsigned pt = 0;
     static int8_t dx = -1;
     static int8_t dy = 0;
     static auto t = millis();
+    static auto p = millis();
+    static byte comptePomme = 0;
+    static unsigned long delayTone = 0; // OFF
 
     const auto b = matrix.button();
     if ((b & Matrix::UP) && !(b & Matrix::DOWN)) { dx = 0; dy = +1; }
@@ -54,26 +67,96 @@ public:
     else if (!(b & Matrix::LEFT) && (b & Matrix::RIGHT)) { dx = +1; dy = 0; };
     
     const auto m = millis();
-    if (m  - t > 500) {
+
+    if ( delayTone && ((m - delayTone) > 50) ) {
+      noTone(Matrix::TONE_PIN);
+      delayTone = 0;
+    }
+
+    if ((m - p > 75) && pomme.set) {
+      p = m;
+      static bool light = false;
+
+      if (light) {
+        matrix.set(pomme.x, pomme.y);
+      } else {
+        matrix.unSet(pomme.x, pomme.y);
+      }
+      light = !light;
+      
+    }
+    
+    if (m - t > 500) { // Every 500 ms
       t = m;
-      auto x = serpent.X();
-      auto y = serpent.Y();
+
+// Effacer serpent
+      auto x = serpent.headX;
+      auto y = serpent.headY;
       matrix.unSet(x, y);
       for (auto i = 0; i < serpent.len(); ++i) {
         serpent.diff(i, x, y);
         matrix.unSet(x, y);
       }
       
+// Déplacer serpent
       serpent.move(dx, dy);
-      
-      x = serpent.X();
-      y = serpent.Y();
+
+// Afficher serpent      
+      x = serpent.headX;
+      y = serpent.headY;
       matrix.set(x, y);
       for (auto i = 0; i < serpent.len(); ++i) {
         serpent.diff(i, x, y);
         matrix.set(x, y);
+        if (serpent.headX == x && serpent.headY == y) { // croisement
+          tone(Matrix::TONE_PIN, NOTE_C4, 250);
+          delay(350);
+          tone(Matrix::TONE_PIN, NOTE_B3, 250);
+          delay(350);
+          tone(Matrix::TONE_PIN, NOTE_A3, 500);
+
+          matrix.clear();
+
+          String s(pt);
+          s += String(F(" points"));
+          matrix.println(s);
+          delay(3000);
+    
+          serpent.last = 0;
+          serpent.headX = 4;
+          serpent.headY = 4;
+          dx = -1;
+          dy = 0;
+          
+          comptePomme = 0;
+          pomme.set = false;
+          
+        }
       }
+
+// Tête serpent sur la pomme
+      if ( pomme.set && (serpent.headX == pomme.x) && (serpent.headY == pomme.y) ) {
+        tone(Matrix::TONE_PIN, NOTE_B0);
+        delayTone = m;
+        comptePomme = 0;  // reset;
+        pomme.set = false;
+        ++serpent.last;
+        ++pt;
+      }
+      
+      ++comptePomme;
+      if (!(comptePomme % 2) && !pomme.set) { // ne pas faire réaparaitre la pomme immédiatement
+        pomme.set = true;
+        do {
+          pomme.x = rand() % 8;
+          pomme.y = rand() % 8;
+        } while (matrix.test(pomme.x, pomme.y));
+//        matrix.set(pomme.x, pomme.y);
+      }
+      
     }
+
+    
     
     return true;
   }
@@ -90,14 +173,6 @@ private:
   
     byte len() const {
       return last;
-    }
-
-    byte X() const {
-      return headX;
-    }
-
-    byte Y() const {
-      return headY;
     }
 
     void diff(const size_t pos, byte& x, byte& y) const {
@@ -127,4 +202,10 @@ private:
     
   } serpent = { 4, 4, 0, { 0, 0, 0, 0 } };
 
+  struct {
+    byte x:3;
+    byte y:3;
+    bool set:1;
+  } pomme = {0, 0, false};
+  
 };
