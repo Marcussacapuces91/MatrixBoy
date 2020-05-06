@@ -115,12 +115,13 @@ public:
           delay(350);
           tone(Matrix::TONE_PIN, NOTE_A3, 500);
 
-          matrix.clear();
-
           String s(pt);
-          s += String(F(" points"));
+          s += String(F(" pts"));
           matrix.println(s);
           delay(3000);
+          matrix.clear(true);
+          delay(50);
+          matrix.clear();
     
           serpent.last = 0;
           serpent.headX = 4;
