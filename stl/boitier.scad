@@ -45,7 +45,10 @@ difference() {
     translate([-22-12,-21+5,0]) cube([7,7,10], center=true);
     
 // Carte Chargeur
-    translate([-3.75,30.75,2.3]) cube([17,10,5],center=true);
+    translate([-3.75,-30.75,2.3]) {
+        cube([17,10,5],center=true);
+        cube([10,15,8],center=true);
+    }
 
 // Carte Arduino
     translate([-27.75,30.75,1.5]) cube([17,10,10],center=true);
