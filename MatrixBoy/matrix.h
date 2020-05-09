@@ -16,7 +16,15 @@
 
 #pragma once
 
+#if 1
 #include "zxpix_font.h"
+#define FONT_WIDTH 6
+#else
+#include "homespun_font.h"
+#define FONT_WIDTH 7
+#endif
+
+#include <avr/sleep.h>
 
 class Matrix {
 public:
@@ -53,30 +61,47 @@ public:
     }
 
     pinMode(A6, INPUT);
-
-// Réglage Timer1
-    noInterrupts();
-    OCR1A = 10;
-    TCCR1A = _BV(WGM10);           
-    TCCR1B = _BV(WGM12) | _BV(CS11) | _BV(CS10);   // clk/64
-    TIMSK1 |= _BV(OCIE1A) | _BV(TOIE1);
-    interrupts();
-
-// Réglage Analog-to-Digital Converter on A6
-    noInterrupts();
-    ADMUX = _BV(REFS0) | _BV(ADLAR) | 0x06; // ref = AVcc & 8 bits & MUX = ADC6
-    ADCSRA = _BV(ADEN) | 0x02;    // ADC Prescaler div. 4
-    ADCSRB = 0;
-    interrupts();
+    setComparator(0x06);
+    setTimer1();
 
     cCol = 0;
   }
 
-/*
-  void println(const __FlashStringHelper* const pData) {
+/**
+ * Mesure power voltage.
+ * @return Power Voltage in Volts.
+ */
+  float alim() const {
+    setTimer1(false); // unset
+    setADC2BG();
+    delay(2); // wait for Vref to settle
+
+    ADCSRA |= _BV(ADSC);  // start conv.
     
+    while ( ADCSRA & _BV(ADSC) ) yield();  // wait until end conv.
+    const unsigned adc = ADCL + ( ADCH * 256U );
+
+    setComparator(0x06);  // comp. BG vs. A6
+    setTimer1();
+    return (1023 * 1.1) / adc;
   }
-*/
+
+  bool pressA(const String& s) {
+    for (unsigned i = 0 ; i < s.length() ; ++i) {
+      print( s.charAt(i) );
+      if ( button() & Matrix::A ) {
+        clear(true);
+        delay(75);
+        clear();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void print(const char c) {
+    println(String(c));
+  }
 
   void println(const char c) {
     println(String(c));
@@ -85,20 +110,28 @@ public:
   void println(const String& str) {
     for (unsigned l = 0; l < str.length(); ++l) {
       const auto c = str.charAt(l);
-// 5 columns
-      for (byte i = 0; i < 6; ++i) {
+
+      byte m = FONT_WIDTH;
+      for (byte i = FONT_WIDTH - 1; i > 1; --i) { //  minimum 2 dots
+        if (!pgm_read_byte(&(font[c - 0x20][i]))) {
+          m = i;
+        }
+      }
+
+      for (byte i = 0; i < m; ++i) {
         const byte b = pgm_read_byte(&(font[c - 0x20][i]));
         for (byte j = 0; j < 8; ++j) {
           leds[j] = (leds[j] >> 1) + ( b & (0x80 >> j) ? 0x80 : 0x00 );
         }
-        delay(50);
+        delay(100);
       }
 // 1 separator
       for (byte j = 0; j < 8; ++j) {
         leds[j] >>= 1;
       }
-      delay(50);
+      delay(100);
     }
+    yield();
   }
 
 
@@ -136,7 +169,7 @@ public:
  * @param invert Let light all LEDs.
  */
   void clear(const bool invert = false) {
-    for (auto i = 0 ; i < 8 ; ++i) {
+    for (byte i = 0; i < 8; ++i) {
       leds[i] = invert ? 0xFF : 0x00;
     }
   }
@@ -164,21 +197,15 @@ public:
     PORTC &= ~B00010100;
     PORTD &= ~B11111100;
 
-// Start ADV Conv.
-    ADCSRA |= _BV(ADSC);
-
-// Test bouton
-    while (!(ADCSRA & _BV(ADIF))) ;  // test int flag.
-    ADCSRA |= _BV(ADIF);  // clear int flag.
-    buttons = (ADCH < 100) ? buttons | (1 << cCol) : buttons & ~(1 << cCol);
-//    Serial.println(ADCH);
+// Read comparator bit (Analog Comparator Output) in ACSR
+    const byte b = 1 << cCol;
+    buttons = ACSR & _BV(ACO) ? buttons | b : buttons & ~b;
 
 // Switch col. off
     pinMode(cols[cCol], INPUT);
 
 // Next col    
-    ++Matrix::cCol;
-    Matrix::cCol %= 8;
+    Matrix::cCol = (Matrix::cCol + 1) % 8;
 
 // Count bits (Brian Kernighan’s Algorithm)
     const uint8_t l = leds[cCol];
@@ -186,10 +213,57 @@ public:
     for (auto n = l; n > 0; n &= (n - 1)) ++count;
     
 // Set timing on
-    OCR1A = 10 + (count * 20) / 10;
+    OCR1A = 10 + (count << 4);
   }
 
 protected:
+/**
+ * Set Analog Comparator using BG vs. Analog Port (mux)
+ * @param mux Multiplexer value [0..7] (ADC0..ADC7)
+ */
+  void setComparator(const byte mux) const {
+    noInterrupts();
+    ADMUX  = mux & ( _BV(MUX2) | _BV(MUX1) | _BV(MUX0) );
+    ADCSRA = 0;         // Unused ADC (mandatory)
+    ADCSRB = _BV(ACME); // Analog Comparator Multiplexer Enable
+    ACSR   = _BV(ACBG); // Analog Comparator BandGap
+    interrupts();
+  }
+  
+/**
+ * Set Analog-to-Digital Converter on A6.
+ */
+  void setADC2A6() const {
+    noInterrupts();
+    ADMUX  = _BV(REFS0) | _BV(ADLAR) | 0x06; // ref = AVcc & 8 bits & MUX = ADC6
+    ADCSRA = _BV(ADEN) | _BV(ADPS1);    // ADC Prescaler div. 4
+    ADCSRB = 0;
+    interrupts();
+  }
+
+/**
+ * Set Analog-to-Digital Converter to Bandgap
+ */
+  void setADC2BG() const {
+    noInterrupts();
+    ADMUX  = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);  // ref = AVcc & 10 bits & MUX = V1.1
+    ADCSRA = _BV(ADEN) | _BV(ADPS2);  // ADC Prescaler div. 16
+    ADCSRB = 0;
+    interrupts();
+  }
+
+/**
+ * Set & start/stop Timer1
+ * @param state start = true (default) / stop = false
+ */
+  void setTimer1(const bool state = true) const {
+    noInterrupts();
+    OCR1A  = 0;
+    TCCR1A = _BV(WGM10);           
+    TCCR1B = _BV(WGM12) | _BV(CS11) | _BV(CS10);   // clk/64
+    TIMSK1 = state ? _BV(OCIE1A) | _BV(TOIE1) : 0;
+    interrupts();
+  }
 
 private:
 
