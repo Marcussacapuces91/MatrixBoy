@@ -86,6 +86,22 @@ public:
     return (1023 * 1.1) / adc;
   }
 
+/**
+ * Set deep sleep mode (need reset to restart).
+ */
+  void deepSleep() const {
+    ADCSRA = 0;         // Unused ADC (mandatory)
+    ADCSRB = 0;         // Unused Comparator
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    sleep_mode();
+  }
+
+/**
+ * Scrolls one line message and return button status.
+ * @param s String to print.
+ * @return true if A button was pressed, false if not.
+ */
   bool pressA(const String& s) {
     for (unsigned i = 0 ; i < s.length() ; ++i) {
       print( s.charAt(i) );
@@ -134,6 +150,27 @@ public:
     yield();
   }
 
+/**  
+ * Show battery cap.
+ * @param v mesured voltage [0..4.2]
+ */
+  void showBattery(const float& v) {
+    const byte i = (v >= 4.1) ? 0b00111100 :
+                   (v >= 3.9) ? 0b00011100 :
+                   (v >= 3.7) ? 0b00001100 :
+                   (v >= 3.5) ? 0b00000100 : 
+                                0b00000000 ;
+    noInterrupts();
+    leds[7] = 0b01111111;
+    leds[6] = 0b11000001;
+    leds[5] = 0b10000001 | i;
+    leds[4] = 0b10000001 | i;
+    leds[3] = 0b11000001;
+    leds[2] = 0b01111111;
+    leds[1] = 0b00000000;
+    leds[0] = 0b00000000;
+    interrupts();
+  }
 
 /**
  * Tests the defined LED (ON/OFF ?).

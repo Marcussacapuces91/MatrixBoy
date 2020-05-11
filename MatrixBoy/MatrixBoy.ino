@@ -25,9 +25,14 @@ void setup() {
   while (!Serial) ;
 
   matrix.begin();
-  delay(500);
+
+  const auto a = matrix.alim();
+  
+  matrix.showBattery(a);
+  delay(2000);
+  matrix.clear();
+  
   while (matrix.button() & Matrix::B) {
-    const auto a = matrix.alim();
     matrix.println( String(F("Bat: ")) + String(a) + String(F("v   ")) );
   }
 }
@@ -37,7 +42,7 @@ void loop() {
   while(!matrix.pressA( String(F("[A] to play Snake...  ")) ) && (millis() - t < 60000U)) ;
   if (millis() - t >= 60000U) {
     matrix.clear();
-    while (true) yield(); 
+    matrix.deepSleep();
   }
   
   snake.setup();
