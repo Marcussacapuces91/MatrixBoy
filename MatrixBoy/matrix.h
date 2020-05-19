@@ -42,7 +42,8 @@ public:
   };
 
   enum {
-    TONE_PIN = 11  // Pin 11
+    TONE_PIN = 11,  // Pin 11
+    BANDGAP_VOLTAGE = 1129 // Bandgap voltage @ 30°C (mV)
   };
 
   uint8_t button() const {
@@ -83,7 +84,7 @@ public:
 
     setComparator(0x06);  // comp. BG vs. A6
     setTimer1();
-    return (1023 * 1.1) / adc;
+    return (1023UL * BANDGAP_VOLTAGE) / adc / 1000.0f;
   }
 
 /**
