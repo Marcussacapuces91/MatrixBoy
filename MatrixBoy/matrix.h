@@ -25,6 +25,7 @@
 #endif
 
 #include <avr/sleep.h>
+#include "ws2812b.h"
 
 class Matrix {
 public:
@@ -61,11 +62,15 @@ public:
       digitalWrite(rows[i], LOW);
     }
 
+    ws.setup();
+    ws.setRGB(0, 0, 32, 0);
+    ws.flush();
+    
+    
     pinMode(A6, INPUT);
     setComparator(0x06);
-    setTimer1();
-
     cCol = 0;
+    setTimer1();
   }
 
 /**
@@ -319,6 +324,10 @@ private:
 
 /// Rows order.
   static const uint8_t rows[8];
+
+/// RGB led
+  WS2812b<5, 1, 1> ws; // D13
+
   
 };
 
@@ -329,7 +338,6 @@ ISR(TIMER1_OVF_vect) {    // ROW ON
 ISR(TIMER1_COMPA_vect) {  // ROW OFF
   Matrix::comparatorInt();
 }
-
 
 volatile uint8_t Matrix::leds[8];
 
