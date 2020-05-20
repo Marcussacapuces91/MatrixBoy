@@ -19,6 +19,8 @@
  * @author Marc SIBERT <marc@sibert.fr>
  */
 
+#pragma once
+
  /**
  * Classe modélisant une ligne de LEDs RGB WS2812.
  * 
