@@ -25,16 +25,8 @@ void setup() {
   while (!Serial) ;
 
   matrix.begin();
-
-  const auto a = matrix.alim();
+  matrix.showBatteryAndVoltage(); 
   
-  matrix.showBattery(a);
-  delay(2000);
-  matrix.clear();
-  
-  while (matrix.button() & Matrix::B) {
-    matrix.println( String(F("Bat: ")) + String(a) + String(F("v   ")) );
-  }
 }
 
 void loop() {
