@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "pitches.h"
 #include "ws2812b.h"
 
 class Matrix {

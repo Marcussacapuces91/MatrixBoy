@@ -11,32 +11,22 @@
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
-   limitations under the License.
+   limitations under the License. 
 */
 
-#include "matrix.h"
-#include "snake.h"
+# pragma once
 
-Matrix matrix;
+#include "Matrix.h"
 
-void setup() {  
-  Serial.begin(115200);
-  while (!Serial) ;
+class SpaceInvaders {
+public:
+  SpaceInvaders(Matrix& aMatrix);
 
-  matrix.begin();
-  matrix.showBatteryAndVoltage(); 
-  
-}
 
-void loop() {
-  const auto t = millis();  
-  while(!matrix.pressA( String(F("[A] to play Snake...  ")) ) && (millis() - t < 60000U)) ;
-  if (millis() - t >= 60000U) {
-    matrix.clear();
-    matrix.deepSleep();
-  }
-  
-  Snake snake(matrix);
-  snake.setup();
-  while (snake.loop()) ;
-}
+private:
+  Matrix& matrix;  
+};
+
+SpaceInvaders::SpaceInvaders(Matrix& aMatrix) :
+  matrix(aMatrix)
+{}

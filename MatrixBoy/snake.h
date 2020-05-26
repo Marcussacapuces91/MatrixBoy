@@ -17,10 +17,13 @@
 #pragma once
 
 #include "matrix.h"
-#include "pitches.h"
 
 class Snake {
-public:  
+public:
+/**
+ * Constructeur de la classe.
+ * @param aMatrix reçoit une référence sur l'instance Matrix qui assurera le fonctionnement du jeu.
+ */
   Snake(Matrix& aMatrix) 
   : matrix(aMatrix) 
   {}
