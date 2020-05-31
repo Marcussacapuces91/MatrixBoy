@@ -57,14 +57,13 @@ void Matrix::begin() {
   ws.setRGB(0, 0, 5, 0);
   ws.flush();
   
-  
   pinMode(A6, INPUT);
   setComparator(0x06);
   cCol = 0;
   setTimer1();
 }
 
-uint8_t Matrix::button() const {
+Matrix::button_t Matrix::button() const {
   return Matrix::buttons;
 }
 
@@ -82,8 +81,8 @@ void Matrix::comparatorInt() {
   PORTD &= ~B11111100;
 
 // Read comparator bit (Analog Comparator Output) in ACSR
-  const byte b = 1 << cCol;
-  buttons = ACSR & _BV(ACO) ? buttons | b : buttons & ~b;
+  const auto b = static_cast<button_t>( 1 << cCol );
+  buttons = ACSR & _BV(ACO) ? static_cast<button_t>(buttons | b) : static_cast<button_t>(buttons & ~b);
 
 // Switch col. off
   pinMode(cols[cCol], INPUT);
@@ -132,6 +131,21 @@ bool Matrix::pressA(const String& s) {
   }
   return false;
 }
+
+Matrix::button_t Matrix::pressButton(const String& s) {
+  for (unsigned i = 0 ; i < s.length() ; ++i) {
+    print( s.charAt(i) );
+    const auto b = button();
+    if ( b ) {
+      clear(true);
+      delay(75);
+      clear();
+      return b;
+    }
+  }
+  return NONE;
+}
+
 
 inline
 void Matrix::print(const char c) {
@@ -272,7 +286,7 @@ volatile uint8_t Matrix::leds[8];
 
 volatile byte Matrix::cCol;
 
-volatile uint8_t Matrix::buttons;
+volatile Matrix::button_t Matrix::buttons;
 
 const uint8_t Matrix::cols[] = { A0, A1, A5,  9,  8, 10, 12, A3};
 

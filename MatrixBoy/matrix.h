@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "pitches.h"
+// #include "pitches.h"
 #include "ws2812b.h"
 
 class Matrix {
@@ -26,6 +26,7 @@ public:
  * Etats retournés par la méthode flash.
  */
   enum button_t {
+    NONE  = 0,
     UP    = _BV(5),
     DOWN  = _BV(0),
     LEFT  = _BV(3),
@@ -56,7 +57,7 @@ public:
 /**
  * Retourne l'état des boutons.
  */
-  uint8_t button() const;
+  button_t button() const;
 
 /**
  * Clear all LEDs.
@@ -85,6 +86,13 @@ public:
  * @return true if A button was pressed, false if not.
  */
   bool pressA(const String& s);
+
+/**
+ * Scrolls one line message and return button status.
+ * @param s String to print.
+ * @return Pressed buttons if any, 0 if not.
+ */
+  button_t pressButton(const String& s);
 
 /**  
  *   
@@ -165,7 +173,7 @@ private:
   static volatile byte cCol;
 
 /// Buttons.
-  static volatile uint8_t buttons;
+  static volatile button_t buttons;
 
 /// Columns order.
   static const uint8_t cols[8];
