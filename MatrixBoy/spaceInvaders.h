@@ -14,7 +14,7 @@
    limitations under the License. 
 */
 
-# pragma once
+#pragma once
 
 #include "Matrix.h"
 
@@ -22,6 +22,23 @@ class SpaceInvaders {
 public:
   SpaceInvaders(Matrix& aMatrix);
 
+/**
+ * Méthode exécutée à l'initialisation de l'instance.
+ * @return un booléen qui indique le bon déroulement de la méthode.
+ */
+  boolean setup() {
+    srand(micros());
+    return true;
+  }
+
+/**
+ * Méthode exécutée en boucle par l'instance.
+ * @return un booléen qui indique le bon déroulement de la méthode. 
+ *         En cas de retour FALSE, il ne faut plus appeler cette méthode (fin du jeu par exemple).
+ */
+  boolean loop() {
+    return false;
+  }  
 
 private:
   Matrix& matrix;  

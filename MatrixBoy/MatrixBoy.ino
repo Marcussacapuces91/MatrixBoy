@@ -16,6 +16,7 @@
 
 #include "matrix.h"
 #include "snake.h"
+#include "spaceInvaders.h"
 
 Matrix matrix;
 
@@ -29,14 +30,39 @@ void setup() {
 }
 
 void loop() {
-  const auto t = millis();  
-  while(!matrix.pressA( String(F("[A] to play Snake...  ")) ) && (millis() - t < 60000U)) ;
+  const auto t = millis();
+  static byte choice = 0;
+  while( millis() - t < 60000U) {
+    switch (choice) {
+      case 0 : {
+        const Matrix::button_t b = matrix.pressButton( String(F("[A] Snake... ")) );
+        if (b == Matrix::UP) choice = 1;
+        else if (b == Matrix::DOWN) choice = 1;
+        else if (b == Matrix::A) {
+          Snake snake(matrix);
+          snake.setup();
+          while (snake.loop()) ;
+        }
+        else if (b == Matrix::NONE) continue;
+        return;
+      }
+      case 1 : {
+        const Matrix::button_t b = matrix.pressButton( String(F("[A] Space Invaders... ")) );
+        if (b == Matrix::UP) choice = 0;
+        else if (b == Matrix::DOWN) choice = 0;
+        else if (b == Matrix::A) {
+          SpaceInvaders si(matrix);
+          si.setup();
+          while (si.loop()) ;
+        }
+        else if (b == Matrix::NONE) continue;
+        return;
+      }
+    }    
+  }
   if (millis() - t >= 60000U) {
     matrix.clear();
     matrix.deepSleep();
   }
   
-  Snake snake(matrix);
-  snake.setup();
-  while (snake.loop()) ;
 }
