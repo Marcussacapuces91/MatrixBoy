@@ -16,11 +16,15 @@
 
 #pragma once
 
-#include "matrix.h"
 #include "pitches.h"
+#include "matrix.h"
 
 class Snake {
-public:  
+public:
+/**
+ * Constructeur de la classe.
+ * @param aMatrix reçoit une référence sur l'instance Matrix qui assurera le fonctionnement du jeu.
+ */
   Snake(Matrix& aMatrix) 
   : matrix(aMatrix) 
   {}
@@ -30,9 +34,7 @@ public:
  * @return un booléen qui indique le bon déroulement de la méthode.
  */
   boolean setup() {
-
     srand(micros());
-    
     return true;
   }
 
@@ -107,7 +109,7 @@ protected:
         delayTone = 0;
       }
 
-// Blink Apple, if set all 100 ms
+// Blink Apple, if set, every 100 ms
       if ((ct - delayPomme > 100) && pomme.set) {
         delayPomme = ct;
         if (light) {
