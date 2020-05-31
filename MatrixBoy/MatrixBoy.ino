@@ -35,7 +35,7 @@ void loop() {
   while( millis() - t < 60000U) {
     switch (choice) {
       case 0 : {
-        const Matrix::button_t b = matrix.pressButton( String(F("[A] Snake... ")) );
+        const auto b = matrix.pressButton( String(F("[A] Snake... ")) );
         if (b == Matrix::UP) choice = 1;
         else if (b == Matrix::DOWN) choice = 1;
         else if (b == Matrix::A) {
@@ -47,7 +47,7 @@ void loop() {
         return;
       }
       case 1 : {
-        const Matrix::button_t b = matrix.pressButton( String(F("[A] Space Invaders... ")) );
+        const auto b = matrix.pressButton( String(F("[A] Space Invaders... ")) );
         if (b == Matrix::UP) choice = 0;
         else if (b == Matrix::DOWN) choice = 0;
         else if (b == Matrix::A) {
@@ -62,7 +62,9 @@ void loop() {
   }
   if (millis() - t >= 60000U) {
     matrix.clear();
-    matrix.deepSleep();
+    while (matrix.button() == Matrix::NONE) {
+      matrix.deepSleep();
+    }
   }
   
 }
